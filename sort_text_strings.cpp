@@ -2,16 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 struct string
 {
-	char* s;
-	size_t l;
+	char* beg;
+	char* end;
 };
 
 FILE *fopen_prot(const char *name, const char *mode, const char *err);
-string *getlines(char *arr, int *nlinesp = NULL);      
-char *freadtoarr(FILE *f, long *size = NULL);
+string *getlines(char *arr, int (*isvalid)(int), size_t *nlinesp = nullptr);      
+char *freadtoarr(FILE *f, long *size = nullptr);
 long getfsize(FILE *f);
 int centries(char *str, int (*isvalid)(int), char c = '\n');
 int sort_strcmp(const void *str1, const void *str2);
@@ -38,10 +39,10 @@ int main(int argc, char** argv)
 	char *chars = freadtoarr(f_to_sort);
 	fclose(f_to_sort);
 	
-	int nlines = 0;
-	string *lines = getlines(chars, &nlines);
+	size_t nlines = 0;
+	string *lines = getlines(chars, isalpha, &nlines);
 	
-	qsort(lines, nlines, sizeof(*lines), sort_rstrcmp);
+	qsort(lines, nlines, sizeof(*lines), sort_strcmp);
 
 	fprintarr(f_sorted, lines);
 	fclose(f_sorted);
@@ -58,10 +59,7 @@ int main(int argc, char** argv)
 FILE *fopen_prot(const char *name, const char *mode, const char *err)
 {
 	FILE *f  = fopen(name, mode);
-	if (!f)
-	{
-		perror(err);
-	}
+	if (!f)	perror(err);
 	return f;
 }
 
@@ -71,9 +69,9 @@ FILE *fopen_prot(const char *name, const char *mode, const char *err)
  */
 void fprintarr(FILE *f, string *arr)
 {
-	for(string *str = arr; str->s; str++)
+	for(string *str = arr; str->beg; str++)
 	{
-		fputs(str->s,	f);
+		fputs(str->beg,	f);
 		fputc('\n',	f);
 	}
 }
@@ -81,7 +79,7 @@ void fprintarr(FILE *f, string *arr)
 /*!	@brief reads file to char array
  *	@param f - file to read
  *	@param size - pointer to long to write size in bytes, if specified
- *	@note default value of size = NULL
+ *	@note default value of size = nullptr
  *	@return pointer to null terminated string of file content
  */
 char *freadtoarr(FILE *f, long *size)
@@ -116,7 +114,7 @@ long getfsize(FILE *f)
  */
 int sort_strcmp(const void *str1, const void *str2)
 {
-	return strcmp(((string *)str1)->s, ((string *)str2)->s);
+	return strcmp(((string *)str1)->beg, ((string *)str2)->beg);
 }
 
 /*!	@brief comparator function for reversed comparing strings from array
@@ -126,51 +124,68 @@ int sort_strcmp(const void *str1, const void *str2)
  */
 int sort_rstrcmp(const void *str1, const void *str2)
 {
-	string s1 = *((string *)str1);
-	string s2 = *((string *)str2);
+	assert(str1 != nullptr);
+	assert(str2 != nullptr);
 
-	long i1 = (long) s1.l - 1;
-	while (ispunct(s1.s[i1]) || isspace(s1.s[i1]) || iscntrl(s1.s[i1])) i1--;
+	string *s1_p = ((string *)str1);
+	string *s2_p = ((string *)str2);
+
+	char *c1_p = s1_p->end;
+	char *c2_p = s2_p->end;
+
+	while (c1_p >= s1_p->beg)
+	{
+		if (isalpha(*c1_p))
+			while (c2_p >= s2_p->beg)
+				if (isalpha(*c2_p))
+					if (*c1_p != *c2_p) return *c1_p - *c2_p;
+					else break;
+	}
+
+/*	long i1 = (long) s1.l - 1;
+	while (ispunct(s1.beg[i1]) || isspace(s1.beg[i1]) || iscntrl(s1.beg[i1])) i1--;
 
 	long i2 = (long) s2.l - 1;
-	while (ispunct(s2.s[i2]) || isspace(s2.s[i2]) || iscntrl(s2.s[i2]))  i2--;
+	while (ispunct(s2.beg[i2]) || isspace(s2.beg[i2]) || iscntrl(s2.beg[i2]))  i2--;
 
 	for (; i1 >= 0 && i2 >= 0; i1--, i2--)
 	{	
-		if (s1.s[i1] != s2.s[i2]) return s1.s[i1] - s2.s[i2];
+		if (s1.beg[i1] != s2.beg[i2]) return s1.beg[i1] - s2.beg[i2];
 	}
 	if (i1 == i2) return 0;
-	if (i1) return s1.s[i1];
-	return s2.s[i2];
+	if (i1) return s1.beg[i1];
+	return s2.beg[i2];*/
+	return 0;
 }
 
 /*!	@brief converts every '\\n' in given string into '\0' and returns array of strings
  * 	@param arr	- string to operate with
  * 	@param nlinesp	- pointer to int to save number of strings, if specified
- * 	@note default value of nlinesp = NULL
+ * 	@note default value of nlinesp = nullptr
  * 	@return pointer to null terminated array of strings
  */
-string *getlines(char *arr, int *nlinesp)
+string *getlines(char *arr, int (*isvalid)(int), size_t *nlinesp)
 {
-	int linectr = centries(arr, isalpha);
+	int linectr = centries(arr, isvalid);
 	string *lines = (string *)calloc(sizeof(string), linectr + 1);
 	linectr = 0;
-	lines[0].s = arr;
+	lines->beg = arr;
 	int val_s = 0;
-	for (char *s = arr; *s != '\0'; s++)
+	for (char *c_p = arr; *c_p != '\0'; c_p++)
 	{
-		val_s ? val_s : isalpha(*s);
-		if (*s == '\n')
+		val_s = val_s ? 1 :(*isvalid)(*c_p);
+		if (*c_p == '\n')
 		{
-			lines[++linectr].s = ++s;
-			lines[linectr - 1].l = lines[linectr].s - lines[linectr - 1].s - 1;
-			*(s - 1) = '\0';
-			/*printf("getlines() L72:\n %d \\n;\nPrevious string:\n\"%s\"\nCurrent string:\n\"%s\"\n",
-				linectr, lines[linectr - 1].s, lines[linectr].s);*/
+			lines[linectr].end = c_p;
+			linectr += val_s ? 1 : 0;
+			lines[linectr].beg = ++c_p;
+			*(c_p - 1) = '\0';
+			/*printf("getlines():\n %d \\n;\nPrevious string:\n\"%s\"\nCurrent string:\n\"%s\"\n",
+				linectr, lines[linectr - 1].beg, lines[linectr].beg);*/
 
 		}
 	}
-	lines[linectr].s = NULL;
+	lines[linectr].beg = lines[linectr].end = nullptr;
 
 	if (nlinesp) *nlinesp = linectr;
 
@@ -188,7 +203,7 @@ int centries(char* str, int (*isvalid)(int), char c)
 	int val_s = 0;
 	for (char *cur_c = str; *cur_c; cur_c++)
 	{
-		val_s ? val_s : (*isvalid)(*cur_c);
+		val_s = val_s ? 1 : (*isvalid)(*cur_c);
 		if (*cur_c == c && val_s) count++;
 	}
 	return count;
