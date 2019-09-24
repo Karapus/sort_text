@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 	size_t nlines = 0;
 	string *lines = getlines(chars, isalpha, &nlines);
 	
-	qsort(lines, nlines, sizeof(*lines), sort_strcmp);
+	qsort(lines, nlines, sizeof(*lines), sort_rstrcmp);
 
 	fprintarr(f_sorted, lines);
 	fclose(f_sorted);
@@ -127,34 +127,22 @@ int sort_rstrcmp(const void *str1, const void *str2)
 	assert(str1 != nullptr);
 	assert(str2 != nullptr);
 
-	string *s1_p = ((string *)str1);
-	string *s2_p = ((string *)str2);
+	const string *s1_p = ((const string *)str1);
+	const string *s2_p = ((const string *)str2);
 
 	char *c1_p = s1_p->end;
 	char *c2_p = s2_p->end;
 
-	while (c1_p >= s1_p->beg)
+	while (c1_p-- > s1_p->beg)
 	{
 		if (isalpha(*c1_p))
-			while (c2_p >= s2_p->beg)
+		{
+			while (c2_p-- > s2_p->beg)
 				if (isalpha(*c2_p))
 					if (*c1_p != *c2_p) return *c1_p - *c2_p;
 					else break;
+		}
 	}
-
-/*	long i1 = (long) s1.l - 1;
-	while (ispunct(s1.beg[i1]) || isspace(s1.beg[i1]) || iscntrl(s1.beg[i1])) i1--;
-
-	long i2 = (long) s2.l - 1;
-	while (ispunct(s2.beg[i2]) || isspace(s2.beg[i2]) || iscntrl(s2.beg[i2]))  i2--;
-
-	for (; i1 >= 0 && i2 >= 0; i1--, i2--)
-	{	
-		if (s1.beg[i1] != s2.beg[i2]) return s1.beg[i1] - s2.beg[i2];
-	}
-	if (i1 == i2) return 0;
-	if (i1) return s1.beg[i1];
-	return s2.beg[i2];*/
 	return 0;
 }
 
