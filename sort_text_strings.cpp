@@ -12,8 +12,8 @@ struct string
 
 FILE *fopen_prot(const char *name, const char *mode, const char *err);
 string *getlines(char *arr, int (*isvalid)(int), size_t *nlinesp = nullptr);      
-char *freadtoarr(FILE *f, long *size = nullptr);
-long getfsize(FILE *f);
+char *freadtoarr(FILE *f, size_t *size = nullptr);
+size_t getfsize(FILE *f);
 int centries(char *str, int (*isvalid)(int), char c = '\n');
 int sort_strcmp(const void *str1, const void *str2);
 int sort_rstrcmp(const void *str1, const void *str2);
@@ -63,7 +63,7 @@ FILE *fopen_prot(const char *name, const char *mode, const char *err)
 	return f;
 }
 
-/*!	@brief prints strings from null terminated char** array into file
+/*!	@brief prints strings from nullptr terminated string array into file
  * 	@param f - file to write to
  * 	@param arr - array to write
  */
@@ -78,13 +78,13 @@ void fprintarr(FILE *f, string *arr)
 
 /*!	@brief reads file to char array
  *	@param f - file to read
- *	@param size - pointer to long to write size in bytes, if specified
+ *	@param size - pointer to size_t to write size in bytes, if specified
  *	@note default value of size = nullptr
  *	@return pointer to null terminated string of file content
  */
-char *freadtoarr(FILE *f, long *size)
+char *freadtoarr(FILE *f, size_t *size)
 {
-	long nchars = getfsize(f);	
+	size_t nchars = getfsize(f);	
 	char *chars = (char *)calloc(sizeof(char), nchars + 1);
 	nchars = fread(chars, sizeof(char), nchars, f);
 	chars[nchars] = '\0';
@@ -98,7 +98,7 @@ char *freadtoarr(FILE *f, long *size)
  * 	@param f - file to mesure
  * 	@return size of file f in bytes
  */
-long getfsize(FILE *f)
+size_t getfsize(FILE *f)
 {
 	long cur_pos = ftell(f);
 	fseek(f, 0, SEEK_END);
@@ -131,17 +131,24 @@ int sort_rstrcmp(const void *str1, const void *str2)
 	const string *s2_p = ((const string *)str2);
 
 	char *c1_p = s1_p->end;
-	char *c2_p = s2_p->end;
+	char *b1_p = s1_p->beg;
+	while (!isalpha(*b1_p) && (b1_p < s2_p->end)) b1_p++;
 
-	while (c1_p-- > s1_p->beg)
+	char *c2_p = s2_p->end;
+	char *b2_p = s2_p->beg;
+	while (!isalpha(*b2_p) && (b2_p < s2_p->end)) b2_p++;
+
+	while (c1_p-- > b1_p)
 	{
 		if (isalpha(*c1_p))
 		{
-			while (c2_p-- > s2_p->beg)
+			while (c2_p-- > b2_p)
 				if (isalpha(*c2_p))
 					if (*c1_p != *c2_p) return *c1_p - *c2_p;
 					else break;
+			if (c2_p == b2_p && c1_p != b1_p) return 1;
 		}
+		if (c1_p == b1_p && c2_p != b2_p) return -1;
 	}
 	return 0;
 }
