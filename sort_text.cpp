@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 	if ((argc - 1) > 1) f_sorted = fopen_prot(argv[2], "w", "File write failed");
 	if (!f_sorted) 	return 2;
 
-	/*lenalphabet_ = makealphabet_("BCAaфывА");
+	lenalphabet_ = makealphabet("BCAaфывА");
 	for (letter *cur_let = alphabet_; cur_let->c; cur_let++)
 		printf("alphabet_[%ld].c == '%c', alphabet_[%ld].i == %d\n", cur_let - alphabet_, cur_let->c, cur_let - alphabet_, cur_let->i);
 
@@ -58,14 +58,14 @@ int main(int argc, char** argv)
 	for (; *teststr; teststr++)
 		printf("isletter(%c) = %d\n", *teststr, isletter(*teststr));
 
-	printf("charcmp(ы, ф) == %d\n", charcmp('ы', 'ф'));*/
+	printf("charcmp(ы, ф) == %d\n", charcmp('ы', 'ф'));
 
 	char *chars = freadtoarr(f_to_sort);
 	fclose(f_to_sort);
 	
 	assert(chars != nullptr);
 
-	lenalphabet_ = makealphabet("АаБбВвГгДдЕеЁёЖжЗзИиКкЛлМмНнИиПпРрСсТтУуФфХхЦцЧчШшЩщъыьЭэЮюЯяAaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz");
+//	lenalphabet_ = makealphabet("АаБбВвГгДдЕеЁёЖжЗзИиКкЛлМмНнИиПпРрСсТтУуФфХхЦцЧчШшЩщъыьЭэЮюЯяAaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz");
 	
 	size_t nlines = 0;
 	string *lines = getlines(chars, isletter, &nlines);
@@ -78,13 +78,13 @@ int main(int argc, char** argv)
 	fclose(f_sorted);
 
 	free(chars);
-	chars == nullptr;
+	chars = nullptr;
 
 	free(lines);
-	lines == nullptr;
+	lines = nullptr;
 
 	free(alphabet_);
-	alphabet_ == nullptr;
+	alphabet_ = nullptr;
 }
 
 /*!	function to open file. If error occurse, prints message
@@ -261,6 +261,11 @@ int centries(char* str, int (*isvalid)(int), char c)
 	return count;
 }
 
+/*!
+ * 	@brief makes alpabet of letters from string
+ * 	@param str	- string to make alphabet from
+ * 	@return length of alphabet
+ */
 unsigned int makealphabet(char *str)
 {
 	assert(str != nullptr);
@@ -285,6 +290,11 @@ int isletter(int c)
 	return getletter(c) + 1;
 }
 
+/*!	
+ * 	@brief get index of alphabet_ corresponding to c
+ * 	@param c	char to find
+ * 	@return index of alphabet_
+ */
 int getletter(char c)
 {
 	letter alpha = {c, 0};
@@ -293,6 +303,9 @@ int getletter(char c)
 	return res - alphabet_;
 }
 
+/*!
+ * 	@brief function to sort alphabet
+ */
 int sort_lettercmp(const void *alpha1, const void *alpha2)
 {
 	assert(alpha1 != nullptr);
@@ -301,6 +314,12 @@ int sort_lettercmp(const void *alpha1, const void *alpha2)
 	return ((letter *)alpha1)->c - ((letter *)alpha2)->c;
 }
 
+/*!
+ * 	@brief comparse chars by alphabet
+ * 	@param a first char;
+ * 	@param b second char;
+ * 	@return > 0 if a > b, 0 if a = b, < 0 if a < b
+ */
 int charcmp(char a, char b)
 {
 	int alpha = getletter(a);
