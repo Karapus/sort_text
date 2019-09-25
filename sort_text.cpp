@@ -10,6 +10,15 @@ struct string
 	char* end;
 };
 
+struct letter
+{
+	char c;
+	unsigned char i;
+};
+
+static letter *alphabet;
+static unsigned int lenalphabet;
+
 FILE *fopen_prot(const char *name, const char *mode, const char *err);
 string *getlines(char *arr, int (*isvalid)(int), size_t *nlinesp = nullptr);      
 char *freadtoarr(FILE *f, size_t *size = nullptr);
@@ -18,6 +27,11 @@ int centries(char *str, int (*isvalid)(int), char c = '\n');
 int sort_strcmp(const void *str1, const void *str2);
 int sort_rstrcmp(const void *str1, const void *str2);
 void fprintarr(FILE *f, string *arr);
+int isletter(int c);
+unsigned int makealphabet(char *str);
+int sort_lettercmp(const void *alpha1, const void *alpha2);
+int getletter(char c);
+int charcmp(char a, char b);
 
 /*!	@mainpage
  * 	Program to sort file lines in lexographical order					\n
@@ -36,11 +50,27 @@ int main(int argc, char** argv)
 	if ((argc - 1) > 1) f_sorted = fopen_prot(argv[2], "w", "File write failed");
 	if (!f_sorted) 	return 2;
 
+	/*lenalphabet = makealphabet("BCAaфывА");
+	for (letter *cur_let = alphabet; cur_let->c; cur_let++)
+		printf("alphabet[%ld].c == '%c', alphabet[%ld].i == %d\n", cur_let - alphabet, cur_let->c, cur_let - alphabet, cur_let->i);
+
+	char *teststr = "AaBbCc";
+	for (; *teststr; teststr++)
+		printf("isletter(%c) = %d\n", *teststr, isletter(*teststr));
+
+	printf("charcmp(ы, ф) == %d\n", charcmp('ы', 'ф'));*/
+
 	char *chars = freadtoarr(f_to_sort);
 	fclose(f_to_sort);
 	
+	assert(chars != nullptr);
+
+	lenalphabet = makealphabet("АаБбВвГгДдЕеЁёЖжЗзИиКкЛлМмНнИиПпРрСсТтУуФфХхЦцЧчШшЩщъыьЭэЮюЯяAaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz");
+	
 	size_t nlines = 0;
-	string *lines = getlines(chars, isalpha, &nlines);
+	string *lines = getlines(chars, isletter, &nlines);
+	
+	assert(lines != nullptr);
 	
 	qsort(lines, nlines, sizeof(*lines), sort_rstrcmp);
 
@@ -58,6 +88,10 @@ int main(int argc, char** argv)
  */
 FILE *fopen_prot(const char *name, const char *mode, const char *err)
 {
+	assert(name != nullptr);
+	assert(mode != nullptr);
+	assert(err != nullptr);
+
 	FILE *f  = fopen(name, mode);
 	if (!f)	perror(err);
 	return f;
@@ -69,6 +103,9 @@ FILE *fopen_prot(const char *name, const char *mode, const char *err)
  */
 void fprintarr(FILE *f, string *arr)
 {
+	assert(f != nullptr);
+	assert(arr != nullptr);
+
 	for(string *str = arr; str->beg; str++)
 	{
 		fputs(str->beg,	f);
@@ -84,8 +121,13 @@ void fprintarr(FILE *f, string *arr)
  */
 char *freadtoarr(FILE *f, size_t *size)
 {
+	assert(f != nullptr);
+
 	size_t nchars = getfsize(f);	
 	char *chars = (char *)calloc(sizeof(char), nchars + 1);
+	
+	assert(chars != nullptr);
+
 	nchars = fread(chars, sizeof(char), nchars, f);
 	chars[nchars] = '\0';
 
@@ -100,6 +142,8 @@ char *freadtoarr(FILE *f, size_t *size)
  */
 size_t getfsize(FILE *f)
 {
+	assert(f != nullptr);
+
 	long cur_pos = ftell(f);
 	fseek(f, 0, SEEK_END);
 	long size = ftell(f);
@@ -114,6 +158,9 @@ size_t getfsize(FILE *f)
  */
 int sort_strcmp(const void *str1, const void *str2)
 {
+	assert(str1 != nullptr);
+	assert(str2 != nullptr);
+
 	return strcmp(((string *)str1)->beg, ((string *)str2)->beg);
 }
 
@@ -144,7 +191,7 @@ int sort_rstrcmp(const void *str1, const void *str2)
 		{
 			while (c2_p-- > b2_p)
 				if (isalpha(*c2_p))
-					if (*c1_p != *c2_p) return *c1_p - *c2_p;
+					if (*c1_p != *c2_p) return charcmp(*c1_p, *c2_p);
 					else break;
 			if (c2_p == b2_p && c1_p != b1_p) return 1;
 		}
@@ -161,6 +208,8 @@ int sort_rstrcmp(const void *str1, const void *str2)
  */
 string *getlines(char *arr, int (*isvalid)(int), size_t *nlinesp)
 {
+	assert(arr != nullptr);
+
 	int linectr = centries(arr, isvalid);
 	string *lines = (string *)calloc(sizeof(string), linectr + 1);
 	linectr = 0;
@@ -194,6 +243,8 @@ string *getlines(char *arr, int (*isvalid)(int), size_t *nlinesp)
  */
 int centries(char* str, int (*isvalid)(int), char c)
 {
+	assert(str != nullptr);
+
 	int count = 0;
 	int val_s = 0;
 	for (char *cur_c = str; *cur_c; cur_c++)
@@ -202,4 +253,54 @@ int centries(char* str, int (*isvalid)(int), char c)
 		if (*cur_c == c && val_s) count++;
 	}
 	return count;
+}
+
+unsigned int makealphabet(char *str)
+{
+	assert(str != nullptr);
+
+	unsigned int len = strlen(str);
+	
+	alphabet = (letter *)calloc(sizeof(*alphabet), len + 1);
+	{
+		letter *cur_let = alphabet;
+		for (char *cur_c = str; *cur_c; cur_let++, cur_c++)
+			cur_let->c = *cur_c, cur_let->i = cur_c - str;
+	}
+	(alphabet + len)->c = '\0';
+	
+	qsort(alphabet, len, sizeof(*alphabet), sort_lettercmp);
+	
+	return len;
+}
+
+int isletter(int c)
+{
+	return getletter(c) + 1;
+}
+
+int getletter(char c)
+{
+	letter alpha = {c, 0};
+	letter *res = (letter *) bsearch(&alpha, alphabet, lenalphabet, sizeof(alpha), sort_lettercmp);
+	if (res == nullptr) return -1;
+	return res - alphabet;
+}
+
+int sort_lettercmp(const void *alpha1, const void *alpha2)
+{
+	assert(alpha1 != nullptr);
+	assert(alpha2 != nullptr);
+	
+	return ((letter *)alpha1)->c - ((letter *)alpha2)->c;
+}
+
+int charcmp(char a, char b)
+{
+	int alpha = getletter(a);
+	int beta  = getletter(b);
+	if (alpha < 0 &&  beta < 0) return 0;
+	if (alpha < 0) return -1;
+	if (beta < 0) return 1;
+        return alphabet[alpha].i - alphabet[beta].i;
 }
