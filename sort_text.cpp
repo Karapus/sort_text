@@ -16,8 +16,8 @@ struct letter
 	unsigned char i;
 };
 
-static letter *alphabet;
-static unsigned int lenalphabet;
+static letter *alphabet_;
+static unsigned int lenalphabet_;
 
 FILE *fopen_prot(const char *name, const char *mode, const char *err);
 string *getlines(char *arr, int (*isvalid)(int), size_t *nlinesp = nullptr);      
@@ -50,9 +50,9 @@ int main(int argc, char** argv)
 	if ((argc - 1) > 1) f_sorted = fopen_prot(argv[2], "w", "File write failed");
 	if (!f_sorted) 	return 2;
 
-	/*lenalphabet = makealphabet("BCAaфывА");
-	for (letter *cur_let = alphabet; cur_let->c; cur_let++)
-		printf("alphabet[%ld].c == '%c', alphabet[%ld].i == %d\n", cur_let - alphabet, cur_let->c, cur_let - alphabet, cur_let->i);
+	/*lenalphabet_ = makealphabet_("BCAaфывА");
+	for (letter *cur_let = alphabet_; cur_let->c; cur_let++)
+		printf("alphabet_[%ld].c == '%c', alphabet_[%ld].i == %d\n", cur_let - alphabet_, cur_let->c, cur_let - alphabet_, cur_let->i);
 
 	char *teststr = "AaBbCc";
 	for (; *teststr; teststr++)
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 	
 	assert(chars != nullptr);
 
-	lenalphabet = makealphabet("АаБбВвГгДдЕеЁёЖжЗзИиКкЛлМмНнИиПпРрСсТтУуФфХхЦцЧчШшЩщъыьЭэЮюЯяAaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz");
+	lenalphabet_ = makealphabet("АаБбВвГгДдЕеЁёЖжЗзИиКкЛлМмНнИиПпРрСсТтУуФфХхЦцЧчШшЩщъыьЭэЮюЯяAaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz");
 	
 	size_t nlines = 0;
 	string *lines = getlines(chars, isletter, &nlines);
@@ -78,7 +78,13 @@ int main(int argc, char** argv)
 	fclose(f_sorted);
 
 	free(chars);
+	chars == nullptr;
+
 	free(lines);
+	lines == nullptr;
+
+	free(alphabet_);
+	alphabet_ == nullptr;
 }
 
 /*!	function to open file. If error occurse, prints message
@@ -261,15 +267,15 @@ unsigned int makealphabet(char *str)
 
 	unsigned int len = strlen(str);
 	
-	alphabet = (letter *)calloc(sizeof(*alphabet), len + 1);
+	alphabet_ = (letter *)calloc(sizeof(*alphabet_), len + 1);
 	{
-		letter *cur_let = alphabet;
+		letter *cur_let = alphabet_;
 		for (char *cur_c = str; *cur_c; cur_let++, cur_c++)
 			cur_let->c = *cur_c, cur_let->i = cur_c - str;
 	}
-	(alphabet + len)->c = '\0';
+	(alphabet_ + len)->c = '\0';
 	
-	qsort(alphabet, len, sizeof(*alphabet), sort_lettercmp);
+	qsort(alphabet_, len, sizeof(*alphabet_), sort_lettercmp);
 	
 	return len;
 }
@@ -282,9 +288,9 @@ int isletter(int c)
 int getletter(char c)
 {
 	letter alpha = {c, 0};
-	letter *res = (letter *) bsearch(&alpha, alphabet, lenalphabet, sizeof(alpha), sort_lettercmp);
+	letter *res = (letter *) bsearch(&alpha, alphabet_, lenalphabet_, sizeof(alpha), sort_lettercmp);
 	if (res == nullptr) return -1;
-	return res - alphabet;
+	return res - alphabet_;
 }
 
 int sort_lettercmp(const void *alpha1, const void *alpha2)
@@ -302,5 +308,5 @@ int charcmp(char a, char b)
 	if (alpha < 0 &&  beta < 0) return 0;
 	if (alpha < 0) return -1;
 	if (beta < 0) return 1;
-        return alphabet[alpha].i - alphabet[beta].i;
+        return alphabet_[alpha].i - alphabet_[beta].i;
 }
