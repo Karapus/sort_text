@@ -4,6 +4,7 @@
 
 #include "src/text_processing.h"
 #include "src/custom_alphabet.h"
+#include "quick-sort/quick_sort.h"
 
 int sort_strcmp(const void *str1, const void *str2);
 int sort_rStrCmp(const void *str1, const void *str2);
@@ -37,7 +38,8 @@ int main(int argc, char** argv)
 	
 	assert(lines != nullptr);
 	
-	qsort(lines, nlines, sizeof(*lines), sort_rStrCmp);
+	//qsort(lines, nlines, sizeof(*lines), sort_rStrCmp);
+	quickSort(lines, nlines, sizeof(*lines), sort_rStrCmp);
 
 	fPrintArr(f_sorted, lines);
 	fclose(f_sorted);

@@ -2,7 +2,7 @@ CC=g++
 CFLAGS=-c -Wall -Wextra
 LDFLAGS=-fsanitize=address
 
-SRCS=main.cpp src/custom_alphabet.cpp src/text_processing.cpp src/ucode_char.cpp
+SRCS=main.cpp src/custom_alphabet.cpp src/text_processing.cpp src/ucode_char.cpp quick-sort/quick_sort.cpp
 OBJS=$(SRCS:.cpp=.o)
 EXEC=a.out
 
