@@ -63,7 +63,7 @@ int sort_strcmp(const void *str1, const void *str2)
 	assert(str1 != nullptr);
 	assert(str2 != nullptr);
 
-	return strcmp(((String *)str1)->beg, ((String *)str2)->beg);
+	return strcmp(((const String *)str1)->beg, ((const String *)str2)->beg);
 }
 
 /*!	@brief comparator function for reversed comparing strings from array
